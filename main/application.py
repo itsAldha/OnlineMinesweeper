@@ -16,6 +16,7 @@ def load():
 @application.route('/save')
 def save():
     resp = make_response(render_template('load.html'))
+    global visitors
     password = visitors+20
     resp.set_cookie('username', password)
     return resp

@@ -17,7 +17,6 @@ def who():
 def login():
     return 'login'
 
-
 @application.route('/user/<username>')
 def profile(username):
     return '{}\'s profile'.format(escape(username))
@@ -25,10 +24,10 @@ def profile(username):
 @application.route('/')
 @application.route('/<val>')
 def index(val=None):
-    resp = make_response(render_template(...))
+    resp = make_response(render_template('index.html', name=val))
     password = visitors+20
     resp.set_cookie('username', password)
-    return render_template('index.html', name=val), resp
+    return resp
 
 @application.route('/counter')
 def counter():

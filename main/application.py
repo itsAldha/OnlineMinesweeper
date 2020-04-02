@@ -2,7 +2,7 @@
 from flask import Flask, render_template, url_for
 from markupsafe import escape
 from main.flaskrun import flaskrun
-from main.test import *
+import test
 
 application = Flask(__name__)
 

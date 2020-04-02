@@ -9,6 +9,12 @@ application = Flask(__name__)
 visitors = 0
 
 
+@application.route('/delete-cookie')
+def delete_cookie():
+    response = make_response("Cookie Removed")
+    response.set_cookie('username', '123456', max_age=0)
+    return res
+
 @application.route('/load')
 def load():
     username = request.cookies.get('username')
@@ -16,11 +22,11 @@ def load():
 
 @application.route('/save')
 def save():
-    #response = make_response(redirect(url_for('load'))
-    response = make_response("Setting a cookie")
-    #global visitors
-    #password = visitors+20
-    response.set_cookie('username', '123456')
+    response = make_response(redirect(url_for('index'))
+    #response = make_response("Setting a cookie")
+    global visitors
+    password = visitors+20
+    response.set_cookie('username', password)
     return response
 
 @application.route('/login')

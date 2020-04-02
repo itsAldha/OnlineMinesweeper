@@ -3,6 +3,10 @@
 <link rel="stylesheet" href='/static/style.css' />
 </head>
 <body>
-    <h1>hello <br>{{name}}</h1>
+	{% if name %}
+	<h1>Hello {{ name }}!</h1>
+	{% else %}
+	<h1>Hello, World!</h1>
+	{% endif %}
 </body>
 </html>

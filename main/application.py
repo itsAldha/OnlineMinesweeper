@@ -5,7 +5,7 @@ from main.flaskrun import flaskrun
 
 application = Flask(__name__)
 
-# global variables
+# Global Variables
 visitors = 0
 
 @application.route('/login')
@@ -16,14 +16,9 @@ def login():
 def profile(username):
     return '{}\'s profile'.format(escape(username))
 
-with application.test_request_context():
-    print(url_for('login'))
-    print(url_for('login', next='/'))
-    print(url_for('profile', username='John Doe'))
-
-@application.route('/<x>')
-def index(x):
-    return render_template('index.html', name=x)
+@application.route('/<val>')
+def index(val=None):
+    return render_template('index.html', name=val)
 
 @application.route('/counter')
 def counter():

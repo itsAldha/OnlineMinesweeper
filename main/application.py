@@ -8,10 +8,6 @@ application = Flask(__name__)
 # Global Variables
 visitors = 0
 
-@application.route('/get')
-def get():
-    username = request.cookies.get('username')
-    return username
 
 @application.route('/load')
 def load():
@@ -21,10 +17,10 @@ def load():
 @application.route('/save')
 def save():
     #response = make_response(redirect(url_for('load'))
-    response = make_response()
+    response = make_response("Setting a cookie")
     #global visitors
     #password = visitors+20
-    response.set_cookie('username', "some cookie")
+    response.set_cookie('username', '123456')
     return response
 
 @application.route('/login')

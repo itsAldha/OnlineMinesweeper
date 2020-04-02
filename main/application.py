@@ -8,10 +8,17 @@ application = Flask(__name__)
 # Global Variables
 visitors = 0
 
-@application.route('/who')
-def who():
+@application.route('/load')
+def load():
     username = request.cookies.get('username')
     return username
+
+@application.route('/save')
+def save():
+    resp = make_response(render_template('load.html'))
+    password = visitors+20
+    resp.set_cookie('username', password)
+    return resp
 
 @application.route('/login')
 def login():
@@ -24,10 +31,7 @@ def profile(username):
 @application.route('/')
 @application.route('/<val>')
 def index(val=None):
-    resp = make_response(render_template('index.html', name=val))
-    password = visitors+20
-    resp.set_cookie('username', password)
-    return resp
+    return render_template('index.html', name=val)
 
 @application.route('/counter')
 def counter():

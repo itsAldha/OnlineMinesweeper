@@ -19,16 +19,12 @@ def counter():
 
 @application.route('/team')
 def team():
-    member1 = "juliana"
-    member2 = "aldha"
-    member3 = "juan"
-
     ourteam = {
-        'member1' : member1,
-        'member2' : member2,
-        'member3' : member3
+        'member1' : "aldha",
+        'member2' : "juliana",
+        'member3' : "juan"
         }
-    return renderrender_template('team.html',**ourteam)
+    return render_template('team.html', **ourteam)
 
 if __name__ == '__main__':
     flaskrun(application)

@@ -22,9 +22,9 @@ def load():
 def save():
     #response = make_response(redirect(url_for('load'))
     response = make_response()
-    global visitors
-    password = visitors+20
-    response.set_cookie('username', str(password))
+    #global visitors
+    #password = visitors+20
+    response.set_cookie('username', "some cookie")
     return response
 
 @application.route('/login')

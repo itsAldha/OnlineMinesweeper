@@ -34,13 +34,14 @@ def delete_cookie():
     return response
 
 
-@application.route('/login' methods=['POST', 'GET'])
+@application.route('/login', methods=['POST', 'GET'])
 def login():
     data = request.form.get['username'];
     global user
     user = data
     return render_template('login.html')
-    
+
+@application.route('/who')
 def who():
     global user
     return user

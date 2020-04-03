@@ -22,7 +22,7 @@ def load():
 
 @application.route('/save')
 def save():
-    response = make_response(redirect(url_for('index'))
+    response = make_response(redirect(url_for('index')))
     #response = make_response("Setting a cookie")
     global visitors
     password = visitors+20

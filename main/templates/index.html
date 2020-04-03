@@ -1,12 +1,28 @@
 <html>
-<head>
-<link rel="stylesheet" href='/static/style.css' />
-</head>
-<body>
-	{% if name %}
-	<h1>Hello {{ name }}!</h1>
-	{% else %}
-	<h1>Hello, World!</h1>
-	{% endif %}
-</body>
+    <head>
+		<link rel="stylesheet" href='/static/style.css' />
+        {% if title %}
+        <title>Hello {{ name }}</title>
+        {% else %}
+        <title>Hello</title>
+        {% endif %}
+    </head>
+    <body>
+        <div>
+            Menu:
+            <a href="{{ url_for('index') }}">Home</a>
+			<a href="{{ url_for('login') }}">Login</a>
+        </div>
+        <hr>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <ul>
+            {% for message in messages %}
+            <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </body>
 </html>

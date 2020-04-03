@@ -7,7 +7,6 @@ application = Flask(__name__)
 
 # Global Variables
 visitors = 0
-user = "none"
 
 @application.route('/save')
 def save():
@@ -33,13 +32,14 @@ def delete_cookie():
     response.set_cookie('username', username, max_age=0)
     return response
 
-
-@application.route('/login', methods=['POST', 'GET'])
+@application.route('/login', methods=['GET', 'POST'])
 def login():
-    data = request.form.get['username'];
-    global user
-    user = data
-    return render_template('login.html')
+    form = LoginForm()
+    if form.validate_on_submit():
+        flash('Login requested for user {}, remember_me={}'.format(
+            form.username.data, form.remember_me.data))
+        return redirect(url_for('index'))
+    return render_template('login.html', name='Sign In', form=form)
 
 @application.route('/who')
 def who():

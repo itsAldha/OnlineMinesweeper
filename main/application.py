@@ -7,13 +7,14 @@ application = Flask(__name__)
 
 # Global Variables
 visitors = 0
+user = "none"
 
-
-@application.route('/delete-cookie')
-def delete_cookie():
-    username = request.cookies.get('username')
-    response = make_response("Cookie Removed")
-    response.set_cookie('username', username, max_age=0)
+@application.route('/save')
+def save():
+    response = make_response( redirect(url_for('index')) )
+    global visitors
+    password = visitors+20
+    response.set_cookie('username', str(password) )
     return response
 
 @application.route('/load')
@@ -25,17 +26,24 @@ def load():
         msg = "Welcome back!" + username
         return msg
 
-@application.route('/save')
-def save():
-    response = make_response( redirect(url_for('index')) )
-    global visitors
-    password = visitors+20
-    response.set_cookie('username', str(password) )
+@application.route('/delete-cookie')
+def delete_cookie():
+    username = request.cookies.get('username')
+    response = make_response("Cookie Removed")
+    response.set_cookie('username', username, max_age=0)
     return response
 
-@application.route('/login')
+
+@application.route('/login' methods=['POST', 'GET'])
 def login():
-    return 'login'
+    data = request.form.get['username'];
+    global user
+    user = data
+    return render_template('login.html')
+    
+def who():
+    global user
+    return user
 
 @application.route('/user/<username>')
 def profile(username):

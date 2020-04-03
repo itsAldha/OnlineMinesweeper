@@ -11,22 +11,23 @@ visitors = 0
 
 @application.route('/delete-cookie')
 def delete_cookie():
+    username = request.cookies.get('username')
     response = make_response("Cookie Removed")
-    response.set_cookie('username', '123456', max_age=0)
-    return res
+    response.set_cookie('username', username, max_age=0)
+    return response
 
 @application.route('/load')
 def load():
     username = request.cookies.get('username')
-    if(username=="123456"):
-        return "Welcome back!"
-    else:
+    if is username None:
         return "Who are you?"
+    else:
+        msg = "Welcome back!" + username
+        return msg
 
 @application.route('/save')
 def save():
-    response = make_response("Saved!")
-    #response = make_response("Setting a cookie")
+    response = make_response( redirect(url_for('index')) )
     global visitors
     password = visitors+20
     response.set_cookie('username', str(password) )

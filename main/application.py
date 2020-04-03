@@ -2,7 +2,7 @@
 from flask import Flask
 from main.flaskrun import flaskrun
 
-#application = Flask(__name__)
+application = Flask(__name__)
 
 
 

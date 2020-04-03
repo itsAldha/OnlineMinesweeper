@@ -29,7 +29,7 @@ def save():
     #response = make_response("Setting a cookie")
     global visitors
     password = visitors+20
-    response.set_cookie('username', password)
+    response.set_cookie('username', str(password) )
     return response
 
 @application.route('/login')

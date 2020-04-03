@@ -19,7 +19,7 @@ def delete_cookie():
 @application.route('/load')
 def load():
     username = request.cookies.get('username')
-    if is username None:
+    if username is None:
         return "Who are you?"
     else:
         msg = "Welcome back!" + username

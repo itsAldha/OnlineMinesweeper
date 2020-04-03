@@ -3,7 +3,7 @@ from markupsafe import escape
 from main.application import application
 
 # Global Variables
-visitors = 0
+visitors = 0 
 
 @application.route('/save')
 def save():

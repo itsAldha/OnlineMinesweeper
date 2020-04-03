@@ -1,3 +1,3 @@
-from flask import Flask
-application = Flask(__name__)
+#from flask import Flask
+#application = Flask(__name__)
 #import main.routes

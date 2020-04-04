@@ -3,6 +3,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, mak
 from markupsafe import escape
 from main.flaskrun import flaskrun
 from main.forms import LoginForm
+
 application = Flask(__name__)
 
 
@@ -34,14 +35,14 @@ def delete_cookie():
     response.set_cookie('username', username, max_age=0)
     return response
 
-@application.route('/login', methods=['GET', 'POST'])
-def login():
-    form = LoginForm()
-    if form.validate_on_submit():
-        flash('Login requested for user {}, remember_me={}'.format(
-            form.username.data, form.remember_me.data))
-        return redirect(url_for('index'))
-    return render_template('login.html', name='Sign In', form=form)
+#@application.route('/login', methods=['GET', 'POST'])
+#def login():
+#    form = LoginForm()
+#    if form.validate_on_submit():
+#        flash('Login requested for user {}, remember_me={}'.format(
+#            form.username.data, form.remember_me.data))
+#        return redirect(url_for('index'))
+#    return render_template('login.html', name='Sign In', form=form)
 
 @application.route('/who')
 def who():

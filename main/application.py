@@ -1,15 +1,17 @@
 #!flask/bin/python
+from main.flaskrun import flaskrun
 from flask import Flask, render_template, request, redirect, url_for, flash, make_response
 from markupsafe import escape
-from main.flaskrun import flaskrun
-from main import forms
+from main.forms import LoginForm
 
 application = Flask(__name__)
-
-
+application.config['SECRET_KEY'] = 'you-will-never-guess'
 
 # Global Variables
 visitors = 0 
+username = "username"
+password = "password"
+
 
 @application.route('/save')
 def save():
@@ -28,10 +30,14 @@ def load():
         msg = "Welcome back!" + username
         return msg
 
-@application.route('/delete-cookie')
-def delete_cookie():
+@application.route('/logout')
+def logout():
     username = request.cookies.get('username')
-    response = make_response("Cookie Removed")
+    if username is None:
+        flash("You are logged out already")
+    else:
+        flash("Logged out successfully")
+    response = make_response( redirect(url_for('index')) )
     response.set_cookie('username', username, max_age=0)
     return response
 
@@ -39,15 +45,20 @@ def delete_cookie():
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        flash('Login requested for user {}, remember_me={}'.format(
-            form.username.data, form.remember_me.data))
-        return redirect(url_for('index'))
+        flash('User {} is logged-in.'.format(form.username.data))
+        global username, password
+        username = form.username.data
+        password = form.password.data
+        response = make_response( redirect(url_for('index')) )
+        response.set_cookie('username', username )
+        return response
     return render_template('login.html', name='Sign In', form=form)
 
 @application.route('/who')
 def who():
-    global user
-    return user
+    global username, password
+    msg = "username is " + username +" and password is " + password
+    return msg
 
 @application.route('/user/<username>')
 def profile(username):
@@ -56,7 +67,8 @@ def profile(username):
 @application.route('/')
 @application.route('/<val>')
 def index(val=None):
-    return render_template('index.html', name=val)
+    username = request.cookies.get('username')
+    return render_template('index.html', name=val, username=username)
 
 @application.route('/counter')
 def counter():
@@ -71,7 +83,9 @@ def team():
         'member2' : "juliana",
         'member3' : "juan"
         }
-    return render_template('team.html', **ourteam)
+    username = request.cookies.get('username')
+    return render_template('team.html', **ourteam,username=username)
+
 
 if __name__ == '__main__':
     flaskrun(application)

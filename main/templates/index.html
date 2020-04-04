@@ -1,19 +1,39 @@
 <html>
     <head>
 		<link rel="stylesheet" href='/static/style.css' />
-        {% if title %}
-        <title>Hello {{ name }}</title>
+        {% if name %}
+        <title>{{ name }}'s Page</title>
         {% else %}
-        <title>Hello</title>
+        <title>Main Page</title>
         {% endif %}
     </head>
     <body>
+		
+		<h2>
+		{% if name %}
+        <p>{{ name }}'s Page</p>
+        {% else %}
+        <p>Main Page</p>
+        {% endif %}
+		</h2>
+		
         <div>
             Menu:
             <a href="{{ url_for('index') }}">Home</a>
+			<a href="{{ url_for('team') }}">Team</a>
+			{% if username %}
+			<a href="{{ url_for('logout') }}">Logout</a>
+			{% else %}
 			<a href="{{ url_for('login') }}">Login</a>
+			{% endif %}
         </div>
-		<!--
+		
+		{% if username %}
+        <p>Logged in ({{ username }})</p>
+        {% else %}
+        <p>Not Logged in</p>
+        {% endif %}
+		
         <hr>
 		{% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -25,6 +45,5 @@
         {% endif %}
         {% endwith %}
         {% block content %}{% endblock %}
-		-->
     </body>
 </html>

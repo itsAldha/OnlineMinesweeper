@@ -2,7 +2,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, make_response
 from markupsafe import escape
 from main.flaskrun import flaskrun
-from main.forms import LoginForm
+#from main.forms import LoginForm
 
 application = Flask(__name__)
 

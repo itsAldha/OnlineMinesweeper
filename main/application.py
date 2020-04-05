@@ -13,14 +13,6 @@ username = "username"
 password = "password"
 
 
-@application.route('/save')
-def save():
-    response = make_response( redirect(url_for('index')) )
-    global visitors 
-    password = visitors+20
-    response.set_cookie('username', str(password) )
-    return response
-
 @application.route('/load')
 def load():
     username = request.cookies.get('username')
@@ -54,15 +46,10 @@ def login():
         return response
     return render_template('login.html', name='Sign In', form=form)
 
-@application.route('/who')
-def who():
+@application.route('/profile')
+def profile():
     global username, password
-    msg = "username is " + username +" and password is " + password
-    return msg
-
-@application.route('/user/<username>')
-def profile(username):
-    return '{}\'s profile'.format(escape(username))
+    return render_template('profile.html', username=username, password=password)
 
 @application.route('/')
 @application.route('/<val>')

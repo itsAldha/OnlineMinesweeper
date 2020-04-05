@@ -20,8 +20,9 @@
         <div>
             Menu:
             <a href="{{ url_for('index') }}">Home</a>
-			<a href="{{ url_for('team') }}">Team</a>
+			<a href="{{ url_for('team') }}">Team</a> | 
 			{% if username %}
+			<a href="{{ url_for('game') }}">Game</a>
 			<a href="{{ url_for('profile') }}">Profile</a>
 			<a href="{{ url_for('logout') }}">Logout</a>
 			{% else %}

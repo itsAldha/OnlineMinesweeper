@@ -7,6 +7,7 @@ from main.forms import LoginForm
 application = Flask(__name__)
 application.config['SECRET_KEY'] = 'you-will-never-guess'
 
+
 # Global Variables
 visitors = 0 
 username = "username"
@@ -50,6 +51,10 @@ def login():
 def profile():
     global username, password
     return render_template('profile.html', username=username, password=password)
+
+@application.route('/game')
+def game():
+    return render_template('game.html', username=username)
 
 @application.route('/')
 @application.route('/<val>')

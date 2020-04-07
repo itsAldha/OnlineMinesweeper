@@ -11,36 +11,7 @@ application.config['SECRET_KEY'] = 'you-will-never-guess'
 
 # Global Variables
 visitors = 0 
-
-@application.route('/load')
-def load():
-    username = request.cookies.get('username')
-    if username is None:
-        return "Who are you?"
-    userSession = request.cookies.get('userSession')
-
-    conn = sqlite3.connect('user.db')
-    c = conn.cursor();
-    c.execute("SELECT * FROM users WHERE username=?",(username,))
-    result = c.fetchone()
-    conn.commit()
-    conn.close()
-
-    msg = "cookie username " + username + "<br> cookie userSession " + userSession + "<br> DB username " + result[0] + "<br> DB session " + result[5]
-    
-    if username==result[0] and userSession==result[5]:
-        msg += "<br><br> THEY MATCH!"
-    else:
-        msg += "<br><br> THEY DO NOT MATCH!"
-    
-    msg += "<br><br> result0: " + result[0]
-    msg += "<br> result1: " + result[1] 
-    msg += "<br> result2: " + str(result[2]) 
-    msg += "<br> result3: " + str(result[3]) 
-    msg += "<br> result4: " + str(result[4])
-    msg += "<br> result5: " + result[5] 
-    
-    return msg
+waiting = []
 
 @application.route('/logout')
 def logout():
@@ -135,28 +106,42 @@ def profile():
     c = conn.cursor();
     c.execute("SELECT * FROM users WHERE username=?",(username,))
     result = c.fetchone()
-    if result is None:
-        response = make_response( redirect(url_for('index')) )
-        response.set_cookie('username', 'username', max_age=0)
-        response.set_cookie('session', 'session', max_age=0)
-        response.set_cookie('userSession', 'userSession', max_age=0)
-        return response
     conn.commit()
     conn.close()
-
-    if username==result[0] and userSession==result[5]:
-        return render_template('profile.html', username=username, games=result[2], won=result[3], lost=result[4])
-    else:
+    
+    if (result is None) or (userSession!=result[5]):
         response = make_response( redirect(url_for('index')) )
         response.set_cookie('username', 'username', max_age=0)
         response.set_cookie('session', 'session', max_age=0)
         response.set_cookie('userSession', 'userSession', max_age=0)
         return response
+    return render_template('profile.html', username=username, games=result[2], won=result[3], lost=result[4])
 
-@application.route('/game')
-def game():
+        
+
+@application.route('/joinGame')
+def joinGame():
     username = request.cookies.get('username')
-    return render_template('game.html', username=username)
+    userSession = request.cookies.get('userSession')
+
+    conn = sqlite3.connect('user.db')
+    c = conn.cursor();
+    c.execute("SELECT * FROM users WHERE username=?",(username,))
+    result = c.fetchone()
+    conn.commit()
+    conn.close()
+    
+    if (result is None) or (userSession!=result[5]):
+        response = make_response( redirect(url_for('index')) )
+        response.set_cookie('username', 'username', max_age=0)
+        response.set_cookie('session', 'session', max_age=0)
+        response.set_cookie('userSession', 'userSession', max_age=0)
+        return response
+    
+    # Add Player To Waiting List
+    if username not in waiting:
+        waiting.append(username)
+    return render_template('game.html', username=username, waiting=waiting)
 
 @application.route('/')
 @application.route('/<val>')
@@ -173,9 +158,9 @@ def counter():
 @application.route('/team')
 def team():
     ourteam = {
-        'member1' : "aldha",
-        'member2' : "juliana",
-        'member3' : "juan"
+        'member1' : "Aldha",
+        'member2' : "Juliana",
+        'member3' : "Juan"
         }
     username = request.cookies.get('username')
     return render_template('team.html', **ourteam, name='Team', username=username)

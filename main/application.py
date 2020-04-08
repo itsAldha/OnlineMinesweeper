@@ -17,7 +17,7 @@ gameInstance = []
 
 def gameInstanceInit():
     gridsize = 10
-    numberofmines = 2
+    numberofmines = 20
     currgrid = [[' ' for i in range(gridsize)] for i in range(gridsize)]
     grid = []
     mines = []

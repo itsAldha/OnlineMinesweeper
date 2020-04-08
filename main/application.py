@@ -27,9 +27,15 @@ def gameInstanceInit():
     flag = 0
     gameOver = False
     busy = False
+    player1 = ''
+    player2 = ''
+    player1Points = 0
+    player2Points = 0
+    prevWinner = None
+    prevLoser = None
     global gameInstance
     for x in range(10):
-        gameInstance.append([gridsize, numberofmines, currgrid, grid, mines, flags, starttime, cell, flag, gameOver, busy, 'player1', 'player2', 0, 0])
+        gameInstance.append([gridsize, numberofmines, currgrid, grid, mines, flags, starttime, cell, flag, gameOver, busy, player1, player2, player1Points, player2Points, prevWinner, prevLoser])
 gameInstanceInit()
 
 # --------------------------------------- USER FUNCTIONS ---------------------------------------
@@ -107,38 +113,15 @@ def register():
 
 @application.route('/logout')
 def logout():
-
     flash("Logged out successfully")
     response = make_response( redirect(url_for('index')) )
     response.set_cookie('username', 'username', max_age=0)
     response.set_cookie('session', 'session', max_age=0)
     response.set_cookie('userSession', 'userSession', max_age=0)
     response.set_cookie('instance', 'instance', max_age=0)
-    response.set_cookie('playing', 'playing', max_age=0)
     response.set_cookie('turn', 'turn', max_age=0)
     return response
 
-
-
-@application.route('/profile')
-def profile():
-    username = request.cookies.get('username')
-    userSession = request.cookies.get('userSession')
-
-    conn = sqlite3.connect('user.db')
-    c = conn.cursor();
-    c.execute("SELECT * FROM users WHERE username=?",(username,))
-    result = c.fetchone()
-    conn.commit()
-    conn.close()
-    
-    if (result is None) or (userSession!=result[5]):
-        response = make_response( redirect(url_for('index')) )
-        response.set_cookie('username', 'username', max_age=0)
-        response.set_cookie('session', 'session', max_age=0)
-        response.set_cookie('userSession', 'userSession', max_age=0)
-        return response
-    return render_template('profile.html', username=username, games=result[2], won=result[3], lost=result[4])
 
 
 
@@ -154,7 +137,9 @@ def removeFromWaiting(name):
 def lobby():
     username = request.cookies.get('username')
     userSession = request.cookies.get('userSession')
-
+    instance = request.cookies.get('instance')
+    turn = request.cookies.get('turn')
+    
     conn = sqlite3.connect('user.db')
     c = conn.cursor();
     c.execute("SELECT * FROM users WHERE username=?",(username,))
@@ -162,13 +147,25 @@ def lobby():
     conn.commit()
     conn.close()
     
+    # If you go to /lobby without logging in
     if (result is None) or (userSession!=result[5]):
         response = make_response( redirect(url_for('index')) )
         response.set_cookie('username', 'username', max_age=0)
         response.set_cookie('session', 'session', max_age=0)
         response.set_cookie('userSession', 'userSession', max_age=0)
         return response
-    
+
+    # If you leave the game, you lose and the game ends
+    if (instance is not None) and (turn is not None):
+        global gameInstance
+        if username == gameInstance[int(instance)][11]:
+            gameInstance[int(instance)][13]-=100
+        elif username == gameInstance[int(instance)][12]:
+            gameInstance[int(instance)][14]-=100
+        gameInstance[int(instance)][9] = True
+        response = make_response( redirect(url_for('gameLoop')) )
+        return response
+
     # Send Ready to Players To StartGame
     for x in range(10):
         if username in gameInstance[x]:
@@ -200,6 +197,12 @@ def lobby():
 def startgame():
     username = request.cookies.get('username')
     instance = int( request.cookies.get('instance') )    
+    
+    # Remove Previous Game Data
+    global gameInstance
+    gameInstance[instance][15] = None
+    gameInstance[instance][16] = None
+    
     if username == gameInstance[instance][11]:
         response = make_response( redirect(url_for('gameInput')) )
         response.set_cookie('turn', 'playing')
@@ -218,12 +221,32 @@ def gameLoop():
     username = request.cookies.get('username')
     instance = int( request.cookies.get('instance') )
     turn = request.cookies.get('turn')
-    if gameInstance[instance][9] is True:
-        response = make_response( redirect(url_for('gameOver')) )
-        response.set_cookie('playing', 'playing', max_age=0)
+    
+    # Check if Other Player Ended the Game Already
+    if ( gameInstance[instance][15] is not None ):
+        print('user {} entered 15'.format(username), flush=True)
+        if username == gameInstance[instance][15]:
+            flash("Congratulations on winning")
+            print('user {} won'.format(username), flush=True)
+        elif username == gameInstance[instance][16]:
+            flash("You lost, better luck next time")
+            print('user {} lost'.format(username), flush=True)
+        else:
+            flash("You should not be here")
+        gameInstance[instance][15] = None
+        gameInstance[instance][16] = None
+        response = make_response( redirect(url_for('profile')) )
+        response.set_cookie('instance', 'instance', max_age=0)
         response.set_cookie('turn', 'turn', max_age=0)
         return response
-    if turn == "watching":
+    
+    # Check if GameOver = True
+    elif gameInstance[instance][9] is True:
+        gameInstance[instance][9] = False
+        response = make_response( redirect(url_for('gameOver')) )
+        response.set_cookie('turn', 'turn', max_age=0)
+        return response
+    elif turn == "watching":
         response = make_response( redirect(url_for('gameInput')) )
         response.set_cookie('turn', 'playing')
         return response;
@@ -245,6 +268,22 @@ def gameOver():
         won = True
     if ( username == gameInstance[instance][12] ) and (gameInstance[instance][14] > gameInstance[instance][13]):
         won = True
+    
+    # Update the User Database
+    conn = sqlite3.connect('user.db')
+    c = conn.cursor();
+    c.execute( "UPDATE users SET games = games + 1 WHERE username=?", (gameInstance[instance][11],) )
+    c.execute( "UPDATE users SET games = games + 1 WHERE username=?", (gameInstance[instance][12],) )
+    
+    if ( username == gameInstance[instance][11]  and  won == True ) or ( username == gameInstance[instance][12]  and  won == False ):
+        c.execute( "UPDATE users SET won = won + 1 WHERE username=?", (gameInstance[instance][11],) )
+        c.execute( "UPDATE users SET lost = lost + 1 WHERE username=?", (gameInstance[instance][12],) )
+    else:
+        c.execute( "UPDATE users SET won = won + 1 WHERE username=?", (gameInstance[instance][12],) )
+        c.execute( "UPDATE users SET lost = lost + 1 WHERE username=?", (gameInstance[instance][11],) )
+    conn.commit()
+    conn.close()
+    
     gameInstance[instance][0] = 10
     gameInstance[instance][1] = 2
     gameInstance[instance][2] = [[' ' for i in range(10)] for i in range(10)]
@@ -256,18 +295,24 @@ def gameOver():
     gameInstance[instance][8] = 0
     gameInstance[instance][9] = False
     gameInstance[instance][10] = False
-    gameInstance[instance][11] = 'player1'
-    gameInstance[instance][12] = 'player2'
+    
+    if ( username == gameInstance[instance][11]  and  won == True ) or ( username == gameInstance[instance][12]  and  won == False ):
+        gameInstance[instance][15] = gameInstance[instance][11]
+        gameInstance[instance][16] = gameInstance[instance][12]
+    else:
+        gameInstance[instance][15] = gameInstance[instance][12]
+        gameInstance[instance][16] = gameInstance[instance][11]
+    
+    gameInstance[instance][11] = ''
+    gameInstance[instance][12] = ''
     gameInstance[instance][13] = 0
     gameInstance[instance][14] = 0
     
-    #TODO: Add GamesPlayed+1 to UserDB
     if won is True:
         flash("Congratulations on winning")
-        #TODO: Add Won+1 to UserDB
     else:
         flash("You lost, better luck next time")
-        #TODO: Add Lost+1 to UserDB
+    
     response = make_response( redirect(url_for('profile')) )
     response.set_cookie('instance', 'instance', max_age=0)
     return response
@@ -312,6 +357,12 @@ def gameInput():
                                                    gameInstance[instance][1], gameInstance[instance][2], gameInstance[instance][3], \
                                                    gameInstance[instance][4], gameInstance[instance][5], gameInstance[instance][6], \
                                                    gameInstance[instance][7], gameInstance[instance][8], gameInstance[instance][9])
+        
+        # State 0 : Game Went On
+        # State 1 : You hit a mine
+        # State 2 : You Found all the mines
+        
+        # Points Distribution
         if state == 0:
             if username == gameInstance[instance][11]:
                 gameInstance[instance][13]+=1
@@ -338,20 +389,61 @@ def gameInput():
 @application.route('/<val>')
 def index(val=None):
     username = request.cookies.get('username')
+    instance = request.cookies.get('instance')
+    turn = request.cookies.get('turn')
+    
+    # If you leave the game, you lose and the game ends
+    if (instance is not None) and (turn is not None):
+        global gameInstance
+        if username == gameInstance[int(instance)][11]:
+            gameInstance[int(instance)][13]-=100
+        elif username == gameInstance[int(instance)][12]:
+            gameInstance[int(instance)][14]-=100
+        gameInstance[int(instance)][9] = True
+        response = make_response( redirect(url_for('gameLoop')) )
+        return response
+    
     return render_template('index.html', name=val, username=username)
 
 
-@application.route('/team')
-def team():
-    print('team page', flush=True)
-    ourteam = {
-        'member1' : "Aldha",
-        'member2' : "Juliana",
-        'member3' : "Juan"
-        }
-    username = request.cookies.get('username')
-    return render_template('team.html', **ourteam, name='Team', username=username)
 
+@application.route('/profile')
+def profile():
+    print('profile page', flush=True)
+    username = request.cookies.get('username')
+    userSession = request.cookies.get('userSession')
+    instance = request.cookies.get('instance')
+    turn = request.cookies.get('turn')
+
+    conn = sqlite3.connect('user.db')
+    c = conn.cursor();
+    c.execute("SELECT * FROM users WHERE username=?",(username,))
+    result = c.fetchone()
+    conn.commit()
+    conn.close()
+    
+    # If you go to /profile without logging in
+    if (result is None) or (userSession!=result[5]):
+        response = make_response( redirect(url_for('index')) )
+        response.set_cookie('username', 'username', max_age=0)
+        response.set_cookie('session', 'session', max_age=0)
+        response.set_cookie('userSession', 'userSession', max_age=0)
+        return response
+    
+    # If you leave the game, you lose and the game ends
+    if (instance is not None) and (turn is not None):
+        global gameInstance
+        if username == gameInstance[int(instance)][11]:
+            gameInstance[int(instance)][13]-=100
+        elif username == gameInstance[int(instance)][12]:
+            gameInstance[int(instance)][14]-=100
+        gameInstance[int(instance)][9] = True
+        response = make_response( redirect(url_for('gameLoop')) )
+        return response
+    
+    return render_template('profile.html', username=username, games=result[2], won=result[3], lost=result[4])
+    
+    
 
 if __name__ == '__main__':
     flaskrun(application)

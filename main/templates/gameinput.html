@@ -1,0 +1,41 @@
+{% extends "header.html" %}
+
+
+{% block content %}
+<meta http-equiv="refresh" content="10; URL=gameloop" />
+
+<h3>Game Room {{ instance }} </h3>
+
+        <ul>
+            <li>Your turn</li>
+        </ul>
+
+		
+<br>
+<h2 style="text-align: center;">Game Board</h2>
+<p style="text-align: center;"> The turn will begin in <span id="countdowntimer">10 </span> Seconds</p>
+
+<script type="text/javascript">
+    var timeleft = 10;
+    var downloadTimer = setInterval(function(){
+    timeleft--;
+    document.getElementById("countdowntimer").textContent = timeleft;
+    if(timeleft <= 0)
+        clearInterval(downloadTimer);
+    },1000);
+</script>
+
+<p style="text-align: center;"><iframe src="gameboard" height="430" width="540" frameborder="0" ></iframe></p>
+
+    <form  style="text-align: center;" action="" method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.choice.label }} {{ form.choice(size=5) }} {{ form.flag.label }} {{ form.flag() }} {{ form.submit() }}
+			<br>
+            {% for error in form.choice.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+    </form>
+	<br><br><br>
+{% endblock %}

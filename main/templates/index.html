@@ -1,44 +1,16 @@
-<html>
-    <head>
-		<link rel="stylesheet" href='/static/style.css' />
-        {% if name %}
-        <title>{{ name }}'s Page</title>
-        {% else %}
-        <title>Main Page</title>
-        {% endif %}
-    </head>
-    <body>
-		
-		<h2>
-		{% if name %}
-        <p>{{ name }}'s Page</p>
-        {% else %}
-        <p>Main Page</p>
-        {% endif %}
-		</h2>
-		
-        <div>
-            Menu:
-            <a href="{{ url_for('index') }}">Home</a>
-			<a href="{{ url_for('team') }}">Team</a> | 
-			{% if username %}
-			<a href="{{ url_for('joinGame') }}">Join A Game</a>
-			<a href="{{ url_for('profile') }}">My Profile</a>
-			<a href="{{ url_for('logout') }}">Logout</a>
-			{% else %}
-			<a href="{{ url_for('login') }}">Login</a>
-			<a href="{{ url_for('register') }}">Register</a>
-			{% endif %}
-        </div>
-		
-		{% if username %}
-        <p>Logged in ({{ username }})</p>
-        {% else %}
-        <p>Not Logged in</p>
-        {% endif %}
-		
-        <hr>
-		{% with messages = get_flashed_messages() %}
+{% extends "header.html" %}
+
+
+{% block content %}
+	
+{% if name %}
+	<h3>{{ name }}'s Page</h3>
+	{% else %}
+	<h3>Main Page</h3>
+	{% endif %}
+	
+	
+	{% with messages = get_flashed_messages() %}
         {% if messages %}
         <ul>
             {% for message in messages %}
@@ -47,6 +19,6 @@
         </ul>
         {% endif %}
         {% endwith %}
-        {% block content %}{% endblock %}
-    </body>
-</html>
+		
+	<br><br>
+{% endblock %}

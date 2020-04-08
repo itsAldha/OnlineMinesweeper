@@ -1,0 +1,35 @@
+<html>
+    <head>
+		<link rel="stylesheet" href='/static/style.css' />
+        {% if name %}
+        <title>{{ name }}'s Page</title>
+        {% else %}
+        <title>Main Page</title>
+        {% endif %}
+    </head>
+    <body>
+        <div>
+            Menu:
+            <a href="{{ url_for('index') }}">Home</a>
+			<a href="{{ url_for('team') }}">Team</a> | 
+			{% if username %}
+			<a href="{{ url_for('lobby') }}">Join A Game</a>
+			<a href="{{ url_for('profile') }}">My Profile</a>
+			<a href="{{ url_for('logout') }}">Logout</a>
+			{% else %}
+			<a href="{{ url_for('login') }}">Login</a>
+			<a href="{{ url_for('register') }}">Register</a>
+			{% endif %}
+        </div>
+		
+		{% if username %}
+        <p>Logged in ({{ username }})</p>
+        {% else %}
+        <p>Not Logged in</p>
+        {% endif %}
+		
+        <hr>
+		
+        {% block content %}{% endblock %}
+    </body>
+</html>

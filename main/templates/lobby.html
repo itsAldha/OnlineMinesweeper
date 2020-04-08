@@ -1,17 +1,20 @@
-{% extends "index.html" %}
+{% extends "header.html" %}
 
 	
 {% block content %}
-<meta http-equiv="refresh" content="5" />
+<meta http-equiv="refresh" content="5; URL=lobby" />
+
 	<h3>
     Join a game
 	</h3>
 	
-    Players waiting for a game:<br>
+	<h3>
+    Players waiting for a game:
+	</h3>
 	<ul>
 	{% for player in waiting %}
 	<li>{{ player }}</li>
 	{% endfor %}
 	</ul>
-
+	<br><br>
 {% endblock %}

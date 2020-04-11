@@ -29,11 +29,6 @@ def getGrid(grid):
             row = row[2:48]
             li = list(row.split("', '")) 
         msg.append(li)
-
-    
-    print("------------->")
-    print(msg)
-    print("------------->")
     return msg
 
 
@@ -123,6 +118,9 @@ def parseinput(inputstring, gridsize):
 
 
 def playgame(result, gridsize, numberofmines, currgrid, grid, mines, flags, starttime, cell, flag, gameOver):
+
+    if gameOver == True:
+        return currgrid, grid, mines, flags, starttime, cell, flag, gameOver, 2
 
     message = result['message']
     cell = result['cell']

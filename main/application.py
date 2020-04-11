@@ -133,6 +133,10 @@ def removeFromWaiting(name):
     if name in waiting:
         waiting.remove(name)
  
+@application.route('/lobbyupdate')
+def lobbyUpdate():
+    return lobby()
+ 
 @application.route('/lobby')
 def lobby():
     username = request.cookies.get('username')
@@ -195,8 +199,11 @@ def lobby():
 
 @application.route('/startgame')
 def startgame():
+
     username = request.cookies.get('username')
     instance = int( request.cookies.get('instance') )    
+    
+    print('---> iam({}) instance({}) in startgame()'.format(username,instance), flush=True)
     
     # Remove Previous Game Data
     global gameInstance
@@ -212,7 +219,6 @@ def startgame():
         response.set_cookie('turn', 'watching')
         return response;
     else:
-        print('---> else is true for username {}'.format(username), flush=True)
         response = make_response( redirect(url_for('logout')) )
         return response;
 
@@ -221,6 +227,8 @@ def gameLoop():
     username = request.cookies.get('username')
     instance = int( request.cookies.get('instance') )
     turn = request.cookies.get('turn')
+    
+    print('---> iam({}) instance({}) turn({}) in gameLoop()'.format(username,instance,turn), flush=True)
     
     # Check if Other Player Ended the Game Already
     if ( gameInstance[instance][15] is not None ):
@@ -241,22 +249,23 @@ def gameLoop():
         return response
     
     # Check if GameOver = True
-    elif gameInstance[instance][9] is True:
+    if gameInstance[instance][9] is True:
+        print('---> iam({}) instance({}) turn({}) in gameLoop() Gameover True'.format(username,instance,turn), flush=True)
         gameInstance[instance][9] = False
         response = make_response( redirect(url_for('gameOver')) )
         response.set_cookie('turn', 'turn', max_age=0)
         return response
-    elif turn == "watching":
+    if turn == "watching":
         response = make_response( redirect(url_for('gameInput')) )
         response.set_cookie('turn', 'playing')
         return response;
-    elif turn == "playing":
+    if turn == "playing":
         response = make_response( redirect(url_for('gameWatch')) )
         response.set_cookie('turn', 'watching')
         return response;
-    else:
-        response = make_response( redirect(url_for('logout')) )
-        return response;
+    print('---> iam({}) instance({}) turn({}) in gameLoop() Gameover True'.format(username,instance,turn), flush=True)
+    response = make_response( redirect(url_for('logout')) )
+    return response;
 
 @application.route('/gameover')
 def gameOver():

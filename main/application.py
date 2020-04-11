@@ -294,7 +294,7 @@ def gameOver():
     conn.close()
     
     gameInstance[instance][0] = 10
-    gameInstance[instance][1] = 2
+    gameInstance[instance][1] = 20
     gameInstance[instance][2] = [[' ' for i in range(10)] for i in range(10)]
     gameInstance[instance][3] = []
     gameInstance[instance][4] = []

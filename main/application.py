@@ -17,7 +17,7 @@ r = 0
 waiting = []
 gameInstance = []
 
-def gameInstanceInit():
+def newGameInstance():
     gridsize = 10
     numberofmines = 25
     currgrid = [[' ' for i in range(gridsize)] for i in range(gridsize)]
@@ -35,9 +35,13 @@ def gameInstanceInit():
     player2Points = 0
     prevWinner = None
     prevLoser = None
+    return [gridsize, numberofmines, currgrid, grid, mines, flags, starttime, cell, flag, gameOver, busy, player1, player2, player1Points, player2Points, prevWinner, prevLoser]
+
+def gameInstanceInit():
     global gameInstance
     for x in range(10):
-        gameInstance.append([gridsize, numberofmines, currgrid, grid, mines, flags, starttime, cell, flag, gameOver, busy, player1, player2, player1Points, player2Points, prevWinner, prevLoser])
+        gameInstance.append( newGameInstance() )
+        
 gameInstanceInit()
 
 # --------------------------------------- USER FUNCTIONS ---------------------------------------
@@ -74,7 +78,7 @@ def login():
             conn.close()
             flash('Login failed. Wrong username or password.')
             return redirect(url_for('index'))
-    return render_template('login.html', name='Sign In', form=form)
+    return render_template('login.html', name='Login', form=form)
 
 
 @application.route('/register', methods=['GET', 'POST'])
@@ -116,21 +120,34 @@ def register():
 @application.route('/logout')
 def logout():
     username = request.cookies.get('username')
+    # If you leave the game, you lose and the game ends
+    conn = sqlite3.connect('user.db')
+    c = conn.cursor();
+    c.execute("SELECT * FROM users WHERE username=?",(username,))
+    result = c.fetchone()
+    conn.commit()
+    conn.close()
+    if (result[6] != '-'):
+        print('\n ---> iam({}) in logout() instance is not '-'  <---\n'.format(username, flush=True))
+        i = int(result[6])
+        global gameInstance
+        if username == gameInstance[i][11]:
+            gameInstance[i][13]-=90
+        elif username == gameInstance[i][12]:
+            gameInstance[i][14]-=90
+        gameInstance[i][9] = True
+        response = make_response( redirect(url_for('gameLoop')) )
+        return response
+        
+    username = request.cookies.get('username')
     flash("Logged out successfully")
     response = make_response( redirect(url_for('index')) )
     response.set_cookie('username', 'username', max_age=0)
     response.set_cookie('session', 'session', max_age=0)
     response.set_cookie('userSession', 'userSession', max_age=0)
-    conn = sqlite3.connect('user.db')
-    c = conn.cursor();
-    c.execute( "UPDATE users SET instance = ? WHERE username=?", ('-',username) )
-    conn.commit()
-    conn.close()
+
     response.set_cookie('turn', 'turn', max_age=0)
     return response
-
-
-
 
 
 # --------------------------------------- GAME FUNCTIONS ---------------------------------------
@@ -153,6 +170,7 @@ def lobby():
     conn.commit()
     conn.close()
     
+    
     # If you go to /lobby without logging in
     if (result is None) or (userSession!=result[5]):
         response = make_response( redirect(url_for('index')) )
@@ -160,15 +178,16 @@ def lobby():
         response.set_cookie('session', 'session', max_age=0)
         response.set_cookie('userSession', 'userSession', max_age=0)
         return response
-
+    
+    
     # If you leave the game, you lose and the game ends
     if (result[6] != '-'):
         i = int(result[6])
         global gameInstance
         if username == gameInstance[i][11]:
-            gameInstance[i][13]-=100
+            gameInstance[i][13]-=80
         elif username == gameInstance[i][12]:
-            gameInstance[i][14]-=100
+            gameInstance[i][14]-=80
         gameInstance[i][9] = True
         response = make_response( redirect(url_for('gameLoop')) )
         return response
@@ -185,10 +204,8 @@ def lobby():
             conn.close()
             print('\n ---> iam({}) JUST SAVED instance({}) in lobby() <---\n'.format(username,str(x)), flush=True)
             return response
-
-
-
-
+    
+    
     # Add Player To Waiting List
     global waiting
     if username not in waiting:
@@ -200,6 +217,7 @@ def lobby():
     if len(waiting) >= 2:
         for x in range(10):
             if gameInstance[x][10] is not True:     # If instance is not busy
+                gameInstance[x] = newGameInstance()
                 print('\n ---> iam({}) JUST FOUND INSTANCE ({}) in lobby() <---\n'.format(username,x), flush=True)
                 gameInstance[x][10] = True          # Make instance busy
                 gameInstance[x][11] = waiting[0]    # Add player 1
@@ -213,6 +231,8 @@ def lobby():
 
 @application.route('/startgame')
 def startgame():
+    global r
+    r=0;
     username = request.cookies.get('username')
     conn = sqlite3.connect('user.db')
     c = conn.cursor();
@@ -255,6 +275,7 @@ def gameLoop():
     global r;
     r+=1;
     print('\nROUND {}\n---> iam({}) instance({}) turn({}) in gameLoop() <--\n'.format(r,username,i,turn), flush=True)
+    print('\nROUND {}\n---> iam({}) <---\n \n{}'.format(r,username,gameInstance[i]), flush=True)
     
     # Check if Other Player Ended the Game Already
     if ( gameInstance[i][15] is not None ):
@@ -278,13 +299,14 @@ def gameLoop():
         response.set_cookie('turn', 'turn', max_age=0)
         return response
     
-    # Check if GameOver = True
+    # Check if You Ended the Game, GameOver = True
     if gameInstance[i][9] == True:
         print('---> iam({}) instance({}) turn({}) in gameLoop() Gameover True'.format(username,i,turn), flush=True)
         gameInstance[i][9] = False
         response = make_response( redirect(url_for('gameOver')) )
         response.set_cookie('turn', 'turn', max_age=0)
         return response
+
     if turn == "watching":
         response = make_response( redirect(url_for('gameInput')) )
         response.set_cookie('turn', 'playing')
@@ -455,9 +477,9 @@ def gameInput():
         else:
             if state == 1:
                 if username == gameInstance[i][11]:
-                    gameInstance[i][13]-=100
+                    gameInstance[i][13]-=70
                 elif username == gameInstance[i][12]:
-                    gameInstance[i][14]-=100
+                    gameInstance[i][14]-=70
             elif state == 2:
                 if username == gameInstance[i][11]:
                     gameInstance[i][13]+=10
@@ -470,16 +492,13 @@ def gameInput():
 # --------------------------------------- MAIN FUNCTIONS ---------------------------------------
 
 @application.route('/')
-@application.route('/<val>')
 def index(val=None):
     username = request.cookies.get('username')
     
     # If you are a guest
     if (username is None):
         return render_template('index.html', name=val, username=username)
-    
-    turn = request.cookies.get('turn')
-    
+
     # If you leave the game, you lose and the game ends
     conn = sqlite3.connect('user.db')
     c = conn.cursor();
@@ -491,9 +510,9 @@ def index(val=None):
         i = int(result[6])
         global gameInstance
         if username == gameInstance[i][11]:
-            gameInstance[i][13]-=100
+            gameInstance[i][13]-=60
         elif username == gameInstance[i][12]:
-            gameInstance[i][14]-=100
+            gameInstance[i][14]-=60
         gameInstance[i][9] = True
         response = make_response( redirect(url_for('gameLoop')) )
         return response
@@ -507,7 +526,6 @@ def profile():
     print('profile page', flush=True)
     username = request.cookies.get('username')
     userSession = request.cookies.get('userSession')
-    turn = request.cookies.get('turn')
 
     conn = sqlite3.connect('user.db')
     c = conn.cursor();
@@ -530,9 +548,9 @@ def profile():
         i = int(result[6])
         global gameInstance
         if username == gameInstance[i][11]:
-            gameInstance[i][13]-=100
+            gameInstance[i][13]-=50
         elif username == gameInstance[i][12]:
-            gameInstance[i][14]-=100
+            gameInstance[i][14]-=50
         gameInstance[i][9] = True
         response = make_response( redirect(url_for('gameLoop')) )
         return response

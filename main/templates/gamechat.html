@@ -1,0 +1,24 @@
+<style type="text/css">
+    input#send
+    {
+        width: 180px;
+        height: 30px;
+    }
+</style>
+
+<br><br><br><br><br>
+<table style="border-collapse: collapse; border-color: gray; width: 170; height: 250px; margin-left: auto; margin-right: auto;" border="1" cellspacing="1" cellpadding="1">
+<tbody>
+<tr>
+<td><p style="text-align: center;"><iframe src="chat" height="260" width="170" frameborder="0" ></iframe></p></td>
+</tr>
+</tbody>
+</table>
+
+<form action="" method="post" novalidate >
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.chat() }} 
+        </p>
+        <p style="text-align: center;">{{ form.send() }}</p>
+    </form>

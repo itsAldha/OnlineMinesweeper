@@ -1,4 +1,25 @@
-<meta http-equiv="refresh" content="5" />
+<meta http-equiv="refresh" content="1" />
+
+
+<table style="border-collapse: collapse; width: 300px; height: 40px; border-color: 377ba8; margin-left: auto; margin-right: auto;" border="1" cellspacing="5" cellpadding="5">
+<tbody>
+<tr>
+<td style="border-color: lightgray; color: #316a90; text-align: center; vertical-align: middle; width: 75px; height: 10px;">{{ player1 }}</td>
+<td style="border-color: lightgray; color: #316a90; text-align: center; vertical-align: middle; width: 75px; height: 10px;">{{ player2 }}</td>
+</tr>
+<tr>
+<td style="border-color: lightgray; text-align: center; vertical-align: middle; width: 75px; height: 10px;">{{ player1points }}</td>
+<td style="border-color: lightgray; text-align: center; vertical-align: middle; width: 75px; height: 10px;">{{ player2points }}</td>
+</tr>
+</tbody>
+</table>
+<br>
+
+{% if gameOver == True %}
+<h2 style="text-align: center;">Game Over</h2>
+<h3 style="text-align: center;">Leave game to see stats</h3>
+{% endif %}
+{% if gameOver == False %}
 <table style="width: 500px; height: 100px; border-color: 377ba8; margin-left: auto; margin-right: auto;" border="1" cellspacing="5" cellpadding="5">
 <tbody>
 <tr>
@@ -146,3 +167,4 @@
 </tr>
 </tbody>
 </table>
+{% endif %}

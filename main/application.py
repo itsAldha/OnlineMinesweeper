@@ -2,7 +2,7 @@
 from main.flaskrun import flaskrun
 from flask import Flask, render_template, request, redirect, url_for, flash, make_response
 from markupsafe import escape
-from main.forms import LoginForm, GameForm
+from main.forms import LoginForm, GameForm, ChatForm
 from main.util import hash_password, verify_password
 import sqlite3
 import threading, time
@@ -16,6 +16,7 @@ application.config['SECRET_KEY'] = 'you-will-never-guess'
 r = 0
 waiting = []
 gameInstance = []
+messages = []
 
 def newGameInstance():
     gridsize = 10
@@ -27,7 +28,7 @@ def newGameInstance():
     starttime = 0
     cell = 0
     flag = 0
-    gameOver = False
+    gameOver = True
     busy = False
     player1 = ''
     player2 = ''
@@ -41,6 +42,7 @@ def gameInstanceInit():
     global gameInstance
     for x in range(10):
         gameInstance.append( newGameInstance() )
+        messages.append([''])
         
 gameInstanceInit()
 
@@ -132,9 +134,9 @@ def logout():
         i = int(result[6])
         global gameInstance
         if username == gameInstance[i][11]:
-            gameInstance[i][13]-=90
+            gameInstance[i][13]-=100
         elif username == gameInstance[i][12]:
-            gameInstance[i][14]-=90
+            gameInstance[i][14]-=100
         gameInstance[i][9] = True
         response = make_response( redirect(url_for('gameLoop')) )
         return response
@@ -185,9 +187,9 @@ def lobby():
         i = int(result[6])
         global gameInstance
         if username == gameInstance[i][11]:
-            gameInstance[i][13]-=80
+            gameInstance[i][13]-=100
         elif username == gameInstance[i][12]:
-            gameInstance[i][14]-=80
+            gameInstance[i][14]-=100
         gameInstance[i][9] = True
         response = make_response( redirect(url_for('gameLoop')) )
         return response
@@ -195,7 +197,7 @@ def lobby():
     
     # Send Ready to Players To StartGame
     for x in range(10):
-        if username in gameInstance[x]:
+        if gameInstance[x][9] == False and username in gameInstance[x]:
             response = make_response( redirect(url_for('startgame')) )
             conn = sqlite3.connect('user.db')
             c = conn.cursor();
@@ -219,9 +221,11 @@ def lobby():
             if gameInstance[x][10] is not True:     # If instance is not busy
                 gameInstance[x] = newGameInstance()
                 print('\n ---> iam({}) JUST FOUND INSTANCE ({}) in lobby() <---\n'.format(username,x), flush=True)
+                gameInstance[x][9] = False          # Make Game Playable
                 gameInstance[x][10] = True          # Make instance busy
                 gameInstance[x][11] = waiting[0]    # Add player 1
                 gameInstance[x][12] = waiting[1]    # Add player 2
+                messages[x] = ['']                  # Empty chatlog for instance
                 waiting.remove(gameInstance[x][11]) # Remove player 1 from waiting list
                 waiting.remove(gameInstance[x][12]) # Remove player 2 from waiting list
                 return render_template('lobby.html', username=username, waiting=waiting)
@@ -249,13 +253,9 @@ def startgame():
     gameInstance[i][15] = None
     gameInstance[i][16] = None
     
-    if username == gameInstance[i][11]:
+    if username == gameInstance[i][11] or username == gameInstance[i][12]:
         response = make_response( redirect(url_for('gameInput')) )
         response.set_cookie('turn', 'playing')
-        return response;
-    elif username == gameInstance[i][12]:
-        response = make_response( redirect(url_for('gameWatch')) )
-        response.set_cookie('turn', 'watching')
         return response;
     else:
         response = make_response( redirect(url_for('logout')) )
@@ -275,7 +275,6 @@ def gameLoop():
     global r;
     r+=1;
     print('\nROUND {}\n---> iam({}) instance({}) turn({}) in gameLoop() <--\n'.format(r,username,i,turn), flush=True)
-    print('\nROUND {}\n---> iam({}) <---\n \n{}'.format(r,username,gameInstance[i]), flush=True)
     
     # Check if Other Player Ended the Game Already
     if ( gameInstance[i][15] is not None ):
@@ -302,18 +301,13 @@ def gameLoop():
     # Check if You Ended the Game, GameOver = True
     if gameInstance[i][9] == True:
         print('---> iam({}) instance({}) turn({}) in gameLoop() Gameover True'.format(username,i,turn), flush=True)
-        gameInstance[i][9] = False
         response = make_response( redirect(url_for('gameOver')) )
         response.set_cookie('turn', 'turn', max_age=0)
         return response
 
-    if turn == "watching":
+    if turn == "playing":
         response = make_response( redirect(url_for('gameInput')) )
         response.set_cookie('turn', 'playing')
-        return response;
-    if turn == "playing":
-        response = make_response( redirect(url_for('gameWatch')) )
-        response.set_cookie('turn', 'watching')
         return response;
     print('\n---> iam({}) instance({}) turn({}) in gameLoop() GameOver Not True, Not Watching, Not Playing <---\n'.format(username,i,turn), flush=True)
     response = make_response( redirect(url_for('profile')) )
@@ -361,7 +355,7 @@ def gameOver():
     gameInstance[i][6] = 0
     gameInstance[i][7] = 0
     gameInstance[i][8] = 0
-    gameInstance[i][9] = False
+    gameInstance[i][9] = True
     gameInstance[i][10] = False
     
     if ( username == gameInstance[i][11]  and  won == True ) or ( username == gameInstance[i][12]  and  won == False ):
@@ -371,10 +365,6 @@ def gameOver():
         gameInstance[i][15] = gameInstance[i][12]
         gameInstance[i][16] = gameInstance[i][11]
     
-    gameInstance[i][11] = ''
-    gameInstance[i][12] = ''
-    gameInstance[i][13] = 0
-    gameInstance[i][14] = 0
     
     if won is True:
         flash("Congratulations on winning")
@@ -425,8 +415,46 @@ def gameBoard():
     else:
         i = int(result[6])
     msg = getGrid( gameInstance[i][2] )
-    return render_template('gameboard.html', name='Game Board', msg=msg)
+
+    return render_template('gameboard.html', name='Game Board', msg=msg, gameOver=gameInstance[i][9],player1=gameInstance[i][11],player1points=gameInstance[i][13],player2=gameInstance[i][12],player2points=gameInstance[i][14])
+
+
+@application.route('/chat', methods=['GET', 'POST'])
+def Chat():
+    username = request.cookies.get('username')
+    conn = sqlite3.connect('user.db')
+    c = conn.cursor();
+    c.execute("SELECT * FROM users WHERE username=?",(username,))
+    result = c.fetchone()
+    conn.commit()
+    conn.close()
+    if (result[6] == '-'):
+        return "No Chat"
+    i = int(result[6])
+    return render_template('chat.html', messages=messages[i])
     
+@application.route('/gamechat', methods=['GET', 'POST'])
+def gameChat():
+    username = request.cookies.get('username')
+    conn = sqlite3.connect('user.db')
+    c = conn.cursor();
+    c.execute("SELECT * FROM users WHERE username=?",(username,))
+    result = c.fetchone()
+    conn.commit()
+    conn.close()
+    if (result[6] == '-'):
+        return "No Chat"
+    i = int(result[6])
+    form = ChatForm()
+    if form.validate_on_submit():
+        message = form.chat.data
+        form.chat.data = ""
+        fullmessage = username + ": " + message
+        messages[i].append(fullmessage)
+        if len( messages[i] ) > 7:
+            messages[i] = messages[i][1:]
+    return render_template('gamechat.html', form=form)
+
 
 @application.route('/gameinput', methods=['GET', 'POST'])
 def gameInput():
@@ -453,11 +481,12 @@ def gameInput():
         if flag:
             inp+="f"
         result = parseinput(inp, gameInstance[i][0])
+        points = 0
 
         gameInstance[i][2], gameInstance[i][3], \
         gameInstance[i][4], gameInstance[i][5], \
         gameInstance[i][6], gameInstance[i][7], \
-        gameInstance[i][8], gameInstance[i][9], state = playgame(result, gameInstance[i][0], \
+        gameInstance[i][8], gameInstance[i][9], points = playgame(result, gameInstance[i][0], \
                                                    gameInstance[i][1], gameInstance[i][2], gameInstance[i][3], \
                                                    gameInstance[i][4], gameInstance[i][5], gameInstance[i][6], \
                                                    gameInstance[i][7], gameInstance[i][8], gameInstance[i][9])
@@ -469,22 +498,11 @@ def gameInput():
         # State 2 : You Found all the mines
         
         # Points Distribution
-        if state == 0:
-            if username == gameInstance[i][11]:
-                gameInstance[i][13]+=1
-            elif username == gameInstance[i][12]:
-                gameInstance[i][14]+=1
-        else:
-            if state == 1:
-                if username == gameInstance[i][11]:
-                    gameInstance[i][13]-=70
-                elif username == gameInstance[i][12]:
-                    gameInstance[i][14]-=70
-            elif state == 2:
-                if username == gameInstance[i][11]:
-                    gameInstance[i][13]+=10
-                elif username == gameInstance[i][12]:
-                    gameInstance[i][14]+=10
+        if username == gameInstance[i][11]:
+            gameInstance[i][13]+=points
+        elif username == gameInstance[i][12]:
+            gameInstance[i][14]+=points
+        
         response = make_response( redirect(url_for('gameLoop')) )
         return response;
     return render_template('gameinput.html', name='Game Input', instance=i, username=username, msg=msg, form=form)
@@ -510,9 +528,9 @@ def index(val=None):
         i = int(result[6])
         global gameInstance
         if username == gameInstance[i][11]:
-            gameInstance[i][13]-=60
+            gameInstance[i][13]-=100
         elif username == gameInstance[i][12]:
-            gameInstance[i][14]-=60
+            gameInstance[i][14]-=100
         gameInstance[i][9] = True
         response = make_response( redirect(url_for('gameLoop')) )
         return response
@@ -548,9 +566,9 @@ def profile():
         i = int(result[6])
         global gameInstance
         if username == gameInstance[i][11]:
-            gameInstance[i][13]-=50
+            gameInstance[i][13]-=100
         elif username == gameInstance[i][12]:
-            gameInstance[i][14]-=50
+            gameInstance[i][14]-=100
         gameInstance[i][9] = True
         response = make_response( redirect(url_for('gameLoop')) )
         return response

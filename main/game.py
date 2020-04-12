@@ -118,9 +118,9 @@ def parseinput(inputstring, gridsize):
 
 
 def playgame(result, gridsize, numberofmines, currgrid, grid, mines, flags, starttime, cell, flag, gameOver):
-
+    points = 0
     if gameOver == True:
-        return currgrid, grid, mines, flags, starttime, cell, flag, gameOver, 2
+        return currgrid, grid, mines, flags, starttime, cell, flag, gameOver, points
 
     message = result['message']
     cell = result['cell']
@@ -140,10 +140,18 @@ def playgame(result, gridsize, numberofmines, currgrid, grid, mines, flags, star
             # Add a flag if the cell is empty
             if currcell == ' ':
                 currgrid[rowno][colno] = 'F'
+                if grid[rowno][colno] == 'X':
+                    points = 5
+                if grid[rowno][colno] != 'X':
+                    points = -1
                 flags.append(cell)
             # Remove the flag if there is one
             elif currcell == 'F':
                 currgrid[rowno][colno] = ' '
+                if grid[rowno][colno] == 'X':
+                    points = -5
+                if grid[rowno][colno] != 'X':
+                    points = 1
                 flags.remove(cell)
             else:
                 message = 'Cannot put a flag there'
@@ -153,12 +161,14 @@ def playgame(result, gridsize, numberofmines, currgrid, grid, mines, flags, star
             message = 'There is a flag there'
 
         elif grid[rowno][colno] == 'X':
+            points = -100
             print('Game Over\n')
             gameOver = True
-            return currgrid, grid, mines, flags, starttime, cell, flag, gameOver, 1
+            return currgrid, grid, mines, flags, starttime, cell, flag, gameOver, points
 
         elif currcell == ' ':
             showcells(grid, currgrid, rowno, colno)
+            points = 1
 
         else:
             message = "That cell is already shown"
@@ -170,7 +180,7 @@ def playgame(result, gridsize, numberofmines, currgrid, grid, mines, flags, star
                 'It took you {} minutes and {} seconds.\n'.format(minutes,
                                                                   seconds))
             gameOver = True
-            return currgrid, grid, mines, flags, starttime, cell, flag, gameOver, 2
+            return currgrid, grid, mines, flags, starttime, cell, flag, gameOver, points
     print(message)
-    return currgrid, grid, mines, flags, starttime, cell, flag, gameOver, 0
+    return currgrid, grid, mines, flags, starttime, cell, flag, gameOver, points
  

@@ -451,8 +451,16 @@ def gameChat():
         form.chat.data = ""
         fullmessage = username + ": " + message
         messages[i].append(fullmessage)
-        if len( messages[i] ) > 7:
+        count = 0
+        for x in range( len(messages[i]) ):
+            count+=1
+            n = len( messages[i][x] )
+            while n > 20:
+                count +=1
+                n -= 20
+        while count > 7:
             messages[i] = messages[i][1:]
+            count -= 1
     return render_template('gamechat.html', form=form)
 
 

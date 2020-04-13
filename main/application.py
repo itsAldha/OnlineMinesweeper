@@ -458,7 +458,7 @@ def gameChat():
             while n > 20:
                 count +=1
                 n -= 20
-        while count > 7:
+        while count > 9:
             messages[i] = messages[i][1:]
             count -= 1
     return render_template('gamechat.html', form=form)

@@ -19,6 +19,7 @@
 </body>
 
 
+
 {% block content %}
 <meta http-equiv="refresh" content="30; URL=gameloop" />
 
@@ -33,7 +34,12 @@
 </tbody>
 </table>
 
-    <form  style="text-align: center;" action="" method="post" novalidate>
+<table style="width: 720px; height: 100px; margin-left: auto; margin-right: auto;" border="0" cellspacing="5" cellpadding="5">
+<tbody>
+<tr>
+<td style="width: 520px;">
+  
+      <form  style="text-align: center;" action="" method="post" novalidate>
         {{ form.hidden_tag() }}
         <p>
             {{ form.choice.label }} {{ form.choice(size=5) }} {{ form.flag.label }} {{ form.flag() }} {{ form.submit() }}
@@ -43,6 +49,14 @@
             {% endfor %}
         </p>
     </form>
+  
+  </td>
+<td style="width: 150px;">&nbsp;</td>
+</tr>
+</tbody>
+</table>
+
+
 
 	<br><br><br>
 {% endblock %}

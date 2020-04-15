@@ -130,7 +130,6 @@ def logout():
     conn.commit()
     conn.close()
     if (result[6] != '-'):
-        print('\n ---> iam({}) in logout() instance is not '-'  <---\n'.format(username, flush=True))
         i = int(result[6])
         global gameInstance
         if username == gameInstance[i][11]:
@@ -155,14 +154,13 @@ def logout():
 # --------------------------------------- GAME FUNCTIONS ---------------------------------------
 
 def removeFromWaiting(name):
-    time.sleep(1.9)
+    time.sleep(5)
     if name in waiting:
         waiting.remove(name)
 
 @application.route('/lobby')
 def lobby():
     username = request.cookies.get('username')
-    print('\n ---> iam({}) I just entered lobby() <---\n'.format(username, flush=True))
     userSession = request.cookies.get('userSession')
     turn = request.cookies.get('turn')
     conn = sqlite3.connect('user.db')
@@ -204,7 +202,6 @@ def lobby():
             c.execute( "UPDATE users SET instance = ? WHERE username=?", (str(x),username) )
             conn.commit()
             conn.close()
-            print('\n ---> iam({}) JUST SAVED instance({}) in lobby() <---\n'.format(username,str(x)), flush=True)
             return response
     
     
@@ -216,11 +213,11 @@ def lobby():
         waiting.append(username)
         waiting = sorted(waiting)
         return render_template('lobby.html', username=username, waiting=waiting)
+    
     if len(waiting) >= 2:
         for x in range(10):
             if gameInstance[x][10] is not True:     # If instance is not busy
                 gameInstance[x] = newGameInstance()
-                print('\n ---> iam({}) JUST FOUND INSTANCE ({}) in lobby() <---\n'.format(username,x), flush=True)
                 gameInstance[x][9] = False          # Make Game Playable
                 gameInstance[x][10] = True          # Make instance busy
                 gameInstance[x][11] = waiting[0]    # Add player 1
@@ -245,8 +242,6 @@ def startgame():
     conn.commit()
     conn.close()   
     i = int(result[6])   
-    
-    print('\n ---> iam({}) instance({}) in startgame() <---\n'.format(username,i), flush=True)
     
     # Remove Previous Game Data
     global gameInstance
@@ -274,17 +269,13 @@ def gameLoop():
     turn = request.cookies.get('turn')
     global r;
     r+=1;
-    print('\nROUND {}\n---> iam({}) instance({}) turn({}) in gameLoop() <--\n'.format(r,username,i,turn), flush=True)
     
     # Check if Other Player Ended the Game Already
     if ( gameInstance[i][15] is not None ):
-        print('user {} entered 15'.format(username), flush=True)
         if username == gameInstance[i][15]:
             flash("Congratulations on winning")
-            print('user {} won'.format(username), flush=True)
         elif username == gameInstance[i][16]:
             flash("You lost, better luck next time")
-            print('user {} lost'.format(username), flush=True)
         else:
             flash("You should not be here")
         gameInstance[i][15] = None
@@ -300,7 +291,6 @@ def gameLoop():
     
     # Check if You Ended the Game, GameOver = True
     if gameInstance[i][9] == True:
-        print('---> iam({}) instance({}) turn({}) in gameLoop() Gameover True'.format(username,i,turn), flush=True)
         response = make_response( redirect(url_for('gameOver')) )
         response.set_cookie('turn', 'turn', max_age=0)
         return response
@@ -309,14 +299,12 @@ def gameLoop():
         response = make_response( redirect(url_for('gameInput')) )
         response.set_cookie('turn', 'playing')
         return response;
-    print('\n---> iam({}) instance({}) turn({}) in gameLoop() GameOver Not True, Not Watching, Not Playing <---\n'.format(username,i,turn), flush=True)
     response = make_response( redirect(url_for('profile')) )
     return response;
 
 @application.route('/gameover')
 def gameOver():
     username = request.cookies.get('username')
-    print('\n ---> iam({}) I just entered gameOver() <---\n'.format(username, flush=True))
     conn = sqlite3.connect('user.db')
     c = conn.cursor();
     c.execute("SELECT * FROM users WHERE username=?",(username,))
@@ -382,7 +370,6 @@ def gameOver():
 @application.route('/gamewatch')
 def gameWatch():
     username = request.cookies.get('username')
-    print('\n ---> iam({}) I just entered gameWatch() <---\n'.format(username, flush=True))
     username = request.cookies.get('username')
     conn = sqlite3.connect('user.db')
     c = conn.cursor();
@@ -410,7 +397,6 @@ def gameBoard():
     conn.commit()
     conn.close()   
     if (result[6] == '-'):
-        print('----> Instance is NONE in gameBoard() <----', flush=True)
         i = 0
     else:
         i = int(result[6])
@@ -477,7 +463,6 @@ def gameChat():
 def gameInput():
     global gameInstance
     username = request.cookies.get('username')
-    print('\n ---> iam({}) I just entered gameInput() <---\n'.format(username, flush=True))
     conn = sqlite3.connect('user.db')
     c = conn.cursor();
     c.execute("SELECT * FROM users WHERE username=?",(username,))
@@ -485,7 +470,6 @@ def gameInput():
     conn.commit()
     conn.close()
     if (result[6] == '-'):
-        print('\n-----> iam({}) in gameInput() I HAVE NO INSTANCE <---\n'.format(username,result[6],turn), flush=True)
         response = make_response( redirect(url_for('profile')) )
         return response;
     i = int(result[6])
@@ -507,9 +491,7 @@ def gameInput():
                                                    gameInstance[i][1], gameInstance[i][2], gameInstance[i][3], \
                                                    gameInstance[i][4], gameInstance[i][5], gameInstance[i][6], \
                                                    gameInstance[i][7], gameInstance[i][8], gameInstance[i][9])
-        
-        print('\n ---> iam({}) instance({}) JUST FINISHED GAME INPUT Gameover is {} <---\n'.format(username,i,gameInstance[i][9]), flush=True)
-    
+            
         # State 0 : Game Went On
         # State 1 : You hit a mine
         # State 2 : You Found all the mines
@@ -558,7 +540,7 @@ def index(val=None):
 
 @application.route('/profile')
 def profile():
-    print('profile page', flush=True)
+    #print('profile page', flush=True)
     username = request.cookies.get('username')
     userSession = request.cookies.get('userSession')
 

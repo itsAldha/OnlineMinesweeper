@@ -477,6 +477,7 @@ def gameInput():
     form = GameForm()
     if form.validate_on_submit():
         prompt = form.choice.data
+        prompt = prompt[0].lower() + prompt[1:]
         flag = form.flag.data
         inp = prompt
         if flag:
